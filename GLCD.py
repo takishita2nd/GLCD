@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import Font as Font
 import time
 
 RS_p = 7
@@ -14,10 +15,8 @@ def __main():
     PinsInit(20, 7, 8, 9, 18, 19, 10, 11, 12, 13, 14, 15, 16, 17)
     GLCDInit()
     GLCDDisplayClear()
-    SelectIC(2)
-    SetPage(7)
-    SetAddress(63)
-    WriteData(0xFF)
+    GLCDPuts(40, 10, "ABCDE")
+
     try:
         while True:
             time.sleep(1.0)
@@ -81,6 +80,48 @@ def GLCDDisplayClear():
             SetAddress(0)
             for x in range(64):
                 WriteData(0)
+
+def GLCDPuts(Xp, Yp, text):
+    x = Xp
+    for s in text:
+        GLCDPutc(x, Yp, s)
+        x += 6
+
+def GLCDPutc(Xp, Yp, c):
+    code = ord(c)
+    #ページ内のラインを選択
+    L = Yp % 8
+    #８×５のキャラクター文字を描画する
+    for i in range(5):
+        SetLocation(Xp + i, Yp)
+        f = Font.Array[code - 0x20][i] << L
+        WriteData(f)
+        if (L != 0) & (SetPg < 7):
+            SetPage(SetPg + 1)
+            SetAddress(SetCol)
+            f = Font.Array[code - 0x20][i] >> (8 - L)
+            WriteData(f)
+
+
+def SetLocation(Xp, Yp):
+    global SetPg
+    global SetCol
+    cs = 0
+    #チップの選択とカラムのアドレスの処理を行う
+    if Xp < 64:
+        #左側(IC1)を選択
+        cs = 1
+        SetCol = Xp
+    else:
+        #右側(IC2)を選択
+        cs = 2
+        SetCol = Xp - 64
+    #ページとラインの選択
+    SetPg = Yp // 8
+    #LCDに描画するアドレスの位置を設定
+    SelectIC(cs)
+    SetPage(SetPg)
+    SetAddress(SetCol)
 
 def SelectIC(value):
     if value == 1:
