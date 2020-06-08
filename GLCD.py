@@ -10,17 +10,19 @@ CS2_p = 19
 DATA_p = [0] * 8
 SetPg = 0
 SetCol = 0
+EWAIT = 0.00003
 
 def __main():
     PinsInit(20, 7, 8, 9, 18, 19, 10, 11, 12, 13, 14, 15, 16, 17)
     GLCDInit()
     GLCDDisplayClear()
-    GLCDPuts(40, 10, "ABCDE")
+    GLCDBox(0, 0, 127, 63)
 
     try:
         while True:
             time.sleep(1.0)
     except KeyboardInterrupt:
+        GLCDDisplayClear()
         GPIO.cleanup()
 
 def PinsInit(rst, rs, rw, enable, cs1, cs2, d0, d1, d2, d3, d4, d5, d6, d7):
@@ -81,6 +83,24 @@ def GLCDDisplayClear():
             for x in range(64):
                 WriteData(0)
 
+def GLCDBox(Xp0, Yp0, Xp1, Yp1):
+    for i in range(Xp0, Xp1 + 1):
+        GLCDPutPixel(i, Yp0)
+        GLCDPutPixel(i, Yp1)
+    for i in range(Yp0 + 1, Yp1):
+        GLCDPutPixel(Xp0, i)
+        GLCDPutPixel(Xp1, i)
+
+def GLCDPutPixel(Xp, Yp):
+    #ラインの選択処理
+    L = 1 << (Yp % 8)
+    #LCDに表示するアドレスの位置をセットする
+    SetLocation(Xp, Yp)
+    #LCD画面の現在表示内容に指定位置のビット(L)をON(OR)させ、そのデータをLCDに送る
+    L = ReadData() | L
+    SetAddress(SetCol)
+    WriteData(L)
+
 def GLCDPuts(Xp, Yp, text):
     x = Xp
     for s in text:
@@ -140,11 +160,36 @@ def SetAddress(value):
 def WriteData(value):
     command(value, GPIO.HIGH)
 
+def ReadData():
+    #データピンを入力に設定
+    for i in range(8):
+        GPIO.setup(DATA_p[i], GPIO.IN)
+    #読み込みモードにする
+    GPIO.output(RW_p, GPIO.HIGH)
+    GPIO.output(RS_p, GPIO.HIGH)
+    #データを読み込む
+    GPIO.output(E_p, GPIO.HIGH)
+    time.sleep(EWAIT)
+    GPIO.output(E_p, GPIO.LOW)
+    ans = 0
+    GPIO.output(E_p, GPIO.HIGH)
+    time.sleep(EWAIT)
+    for i in range(8):
+        ans = ans | (GPIO.input(DATA_p[i]) << i)
+    GPIO.output(E_p, GPIO.LOW)
+    #書き込みモードにする
+    GPIO.output(RW_p, GPIO.LOW)
+    #データピンを出力に設定
+    for i in range(8):
+        GPIO.setup(DATA_p[i], GPIO.OUT)
+    return ans
+
 def command(value, mode):
     GPIO.output(RS_p, mode)
     for i in range(8):
         GPIO.output(DATA_p[i], (value >> i) & 0x01)
     GPIO.output(E_p, GPIO.HIGH)
+    time.sleep(EWAIT)
     GPIO.output(E_p, GPIO.LOW)
 
 __main()
