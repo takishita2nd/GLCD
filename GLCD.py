@@ -10,7 +10,7 @@ CS2_p = 19
 DATA_p = [0] * 8
 SetPg = 0
 SetCol = 0
-EWAIT = 0.00003
+EWAIT = 0.0000005
 
 def __main():
     PinsInit(20, 7, 8, 9, 18, 19, 10, 11, 12, 13, 14, 15, 16, 17)
