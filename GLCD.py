@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import Font as Font
 import time
+import datetime
 
 RS_p = 7
 RW_p = 8
@@ -16,11 +17,13 @@ def __main():
     PinsInit(20, 7, 8, 9, 18, 19, 10, 11, 12, 13, 14, 15, 16, 17)
     GLCDInit()
     GLCDDisplayClear()
-    GLCDBox(0, 0, 127, 63)
+    GLCDBox(0, 0, 127, 62)
+    GLCDLine(0, 15, 127, 15)
 
     try:
         while True:
-            time.sleep(1.0)
+            GLCDPuts(30, 38, datetime.datetime.now().strftime('%H:%M:%S'))
+            time.sleep(0.1)
     except KeyboardInterrupt:
         GLCDDisplayClear()
         GPIO.cleanup()
@@ -90,6 +93,46 @@ def GLCDBox(Xp0, Yp0, Xp1, Yp1):
     for i in range(Yp0 + 1, Yp1):
         GLCDPutPixel(Xp0, i)
         GLCDPutPixel(Xp1, i)
+
+def GLCDLine(Xp0, Yp0, Xp1, Yp1):
+    #差分の大きい方を求める
+    steep = (abs(Yp1 - Yp0) > abs(Xp1 - Xp0))
+    #X,Yの入れ替え
+    if steep == True:
+        x = Xp0
+        Xp0 = Yp0
+        Yp0 = x
+        x = Xp1
+        Xp1 = Yp1
+        Yp1 = x
+    if Xp0 > Xp1:
+        x = Xp0
+        Xp0 = Xp1
+        Xp1 = x
+        x = Yp0
+        Yp0 = Yp1
+        Yp1 = x
+    #傾き計算
+    deltax = Xp1 - Xp0
+    deltay = abs(Yp1 - Yp0)
+    er = 0
+    y = Yp0
+    ystep = 0
+    #傾きでステップの正負を切り替え
+    if Yp0 < Yp1:
+        ystep = 1
+    else:
+        ystep = -1
+    #直線を点で描画
+    for x in range(Xp0, Xp1 + 1):
+        if steep == True:
+            GLCDPutPixel(y, x)
+        else:
+            GLCDPutPixel(x, y)
+        er += deltay
+        if (er << 1) >= deltax:
+            y += ystep
+            er -= deltax
 
 def GLCDPutPixel(Xp, Yp):
     #ラインの選択処理
