@@ -22,7 +22,7 @@ def __main():
 
     try:
         while True:
-            GLCDPuts(30, 38, datetime.datetime.now().strftime('%H:%M:%S'))
+            GLCDPuts(10, 18, 'Time : ' + datetime.datetime.now().strftime('%H:%M:%S'))
             time.sleep(0.1)
     except KeyboardInterrupt:
         GLCDDisplayClear()
