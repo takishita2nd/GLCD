@@ -13,21 +13,6 @@ SetPg = 0
 SetCol = 0
 EWAIT = 0.0000005
 
-def __main():
-    PinsInit(20, 7, 8, 9, 18, 19, 10, 11, 12, 13, 14, 15, 16, 17)
-    GLCDInit()
-    GLCDDisplayClear()
-    GLCDBox(0, 0, 127, 62)
-    GLCDLine(0, 15, 127, 15)
-
-    try:
-        while True:
-            GLCDPuts(10, 18, 'Time : ' + datetime.datetime.now().strftime('%H:%M:%S'))
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        GLCDDisplayClear()
-        GPIO.cleanup()
-
 def PinsInit(rst, rs, rw, enable, cs1, cs2, d0, d1, d2, d3, d4, d5, d6, d7):
     GPIO.setmode(GPIO.BCM)
 
@@ -234,7 +219,5 @@ def command(value, mode):
     GPIO.output(E_p, GPIO.HIGH)
     time.sleep(EWAIT)
     GPIO.output(E_p, GPIO.LOW)
-
-__main()
 
 
